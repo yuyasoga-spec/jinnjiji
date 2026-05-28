@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌿 もりのさいようけいかく</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap');
+
+:root {
+  --cream:   #fdf8f0;
+  --cream2:  #fef3e2;
+  --sage:    #b5c9a8;
+  --sage2:   #8aab7a;
+  --sage3:   #5d8a50;
+  --mint:    #d4ede8;
+  --blush:   #f7d9d9;
+  --peach:   #fce4c8;
+  --sky:     #cce4f7;
+  --lavender:#e5daf7;
+  --yellow:  #fef3b0;
+  --brown:   #8b6551;
+  --text:    #4a3728;
+  --text2:   #7a6055;
+  --border:  #e8d5c0;
+
+  --pri-s: #e05c5c;
+  --pri-a: #d4900a;
+  --pri-b: #4a86c8;
+  --pri-c: #8a9a8a;
+
+  --r: 16px; --r-sm: 10px; --r-xs: 6px;
+  --shadow: 0 3px 12px rgba(139,101,81,.12);
+  --shadow-lg: 0 8px 32px rgba(139,101,81,.18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 13px;
+  line-height: 1.6;
+  background-image:
+    radial-gradient(ellipse at 10% 20%, rgba(181,201,168,.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(252,228,200,.4) 0%, transparent 50%);
+}
+
+/* Floating animals */
+.forest-bg {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+}
+.f-animal {
+  position: absolute; font-size: 32px; opacity: .08;
+  animation: floatAnimal 12s ease-in-out infinite;
+}
+.f-animal:nth-child(1){ top:5%; left:3%; animation-delay:0s; font-size:40px; }
+.f-animal:nth-child(2){ top:15%; right:4%; animation-delay:2s; font-size:28px; }
+.f-animal:nth-child(3){ bottom:20%; left:5%; animation-delay:4s; font-size:36px; }
+.f-animal:nth-child(4){ bottom:10%; right:6%; animation-delay:1s; font-size:30px; }
+.f-animal:nth-child(5){ top:50%; left:1%; animation-delay:3s; font-size:24px; }
+.f-animal:nth-child(6){ top:40%; right:2%; animation-delay:5s; font-size:26px; }
+.f-animal:nth-child(7){ top:75%; left:45%; animation-delay:2.5s; font-size:22px; }
+@keyframes floatAnimal {
+  0%,100%{ transform:translateY(0) rotate(-5deg); }
+  50%{ transform:translateY(-18px) rotate(5deg); }
+}
+
+/* ── Header ── */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(253,248,240,.92); backdrop-filter: blur(12px);
+  border-bottom: 2px dashed var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 900; font-size: 17px; color: var(--sage3);
+  letter-spacing: .04em;
+}
+.logo-animals { font-size: 22px; display: flex; gap: 2px; }
+.header-meta { display: flex; align-items: center; gap: 14px; }
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: #e8f5e9; border: 1.5px solid var(--sage2);
+  color: var(--sage3); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700;
+}
+.live-dot { width:7px;height:7px;background:var(--sage2);border-radius:50%;animation:pulse 2s infinite; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Tabs ── */
+.tab-bar {
+  background: rgba(253,248,240,.95);
+  border-bottom: 2px dashed var(--border);
+  padding: 0 24px; display: flex; gap: 4px; position: sticky; top: 64px; z-index: 99;
+}
+.tab {
+  padding: 14px 20px; cursor: pointer; font-size: 13px; font-weight: 700;
+  color: var(--text2); border-bottom: 3px solid transparent;
+  transition: all .2s; border-radius: var(--r-xs) var(--r-xs) 0 0;
+}
+.tab:hover { color: var(--sage3); background: rgba(181,201,168,.2); }
+.tab.active { color: var(--sage3); border-bottom-color: var(--sage2); background: rgba(181,201,168,.15); }
+
+/* ── Main ── */
+main { padding: 20px 24px; max-width: 1800px; position: relative; z-index: 1; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── KPI Cards ── */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.kpi-card {
+  background: #fff; border: 2px solid var(--border);
+  border-radius: var(--r); padding: 14px 16px;
+  box-shadow: var(--shadow); position: relative; overflow: hidden;
+}
+.kpi-card::before {
+  content: attr(data-animal); position: absolute; right: -2px; bottom: -4px;
+  font-size: 32px; opacity: .18; transform: rotate(-10deg);
+}
+.kpi-label { font-size: 10px; font-weight: 700; color: var(--text2); margin-bottom: 3px; letter-spacing: .05em; }
+.kpi-value { font-size: 26px; font-weight: 900; font-family: 'JetBrains Mono'; }
+.kpi-sub { font-size: 10px; color: var(--text2); margin-top: 1px; }
+.kpi-sage   .kpi-value { color: var(--sage3); }
+.kpi-peach  .kpi-value { color: #d4751a; }
+.kpi-blush  .kpi-value { color: var(--pri-s); }
+.kpi-sky    .kpi-value { color: #2a6fb0; }
+.kpi-lav    .kpi-value { color: #6a40c8; }
+.kpi-yellow .kpi-value { color: #b08a00; }
+
+/* ── Toolbar ── */
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 100px; font-size: 12px; font-weight: 700;
+  font-family: inherit; cursor: pointer; border: 2px solid transparent; transition: all .15s;
+}
+.btn-primary { background: var(--sage2); border-color: var(--sage3); color: #fff; }
+.btn-primary:hover { background: var(--sage3); transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn-ghost { background: #fff; border-color: var(--border); color: var(--text2); }
+.btn-ghost:hover { border-color: var(--sage); background: var(--mint); }
+.btn-danger { background: #fff0f0; border-color: #f5a0a0; color: var(--pri-s); }
+.search-box {
+  flex: 1; max-width: 260px;
+  background: #fff; border: 2px solid var(--border);
+  border-radius: 100px; padding: 7px 16px;
+  color: var(--text); font-family: inherit; font-size: 12px;
+}
+.search-box:focus { outline: none; border-color: var(--sage2); }
+.filter-select {
+  background: #fff; border: 2px solid var(--border); border-radius: 100px;
+  padding: 7px 12px; color: var(--text); font-family: inherit; font-size: 12px; cursor: pointer;
+}
+.filter-select:focus { outline: none; border-color: var(--sage2); }
+
+/* ── Accordion ── */
+.accordion-wrap { margin-bottom: 20px; }
+.accordion-item {
+  background: #fff; border: 2px solid var(--border); border-radius: var(--r);
+  margin-bottom: 8px; overflow: hidden; box-shadow: var(--shadow);
+}
+.accordion-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px; cursor: pointer; font-weight: 700; font-size: 14px;
+  transition: background .15s; user-select: none;
+}
+.accordion-header:hover { background: var(--cream2); }
+.accordion-header.open { background: var(--cream2); }
+.acc-left { display: flex; align-items: center; gap: 10px; }
+.acc-icon { font-size: 20px; }
+.acc-arrow { font-size: 12px; color: var(--text2); transition: transform .2s; }
+.accordion-header.open .acc-arrow { transform: rotate(90deg); }
+.accordion-body { display: none; border-top: 2px dashed var(--border); }
+.accordion-body.open { display: block; }
+
+/* Sub-accordion (事業) */
+.sub-acc-item { border-bottom: 1px dashed var(--border); }
+.sub-acc-item:last-child { border-bottom: none; }
+.sub-acc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px 10px 36px; cursor: pointer; font-weight: 700; font-size: 13px;
+  color: var(--text2); transition: background .15s;
+}
+.sub-acc-header:hover { background: var(--cream); }
+.sub-acc-header.open { background: var(--cream); }
+.sub-acc-body { display: none; }
+.sub-acc-body.open { display: block; }
+
+/* Table inside accordion */
+.acc-table-wrap { overflow-x: auto; }
+.acc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.acc-table th {
+  background: var(--cream); padding: 8px 12px; text-align: left;
+  font-size: 10px; font-weight: 700; color: var(--text2); white-space: nowrap;
+  letter-spacing: .05em; border-bottom: 1px dashed var(--border);
+}
+.acc-table td {
+  padding: 8px 12px; border-bottom: 1px dashed var(--border); vertical-align: middle; white-space: nowrap;
+}
+.acc-table tr:last-child td { border-bottom: none; }
+.acc-table tr:hover td { background: var(--cream2); }
+
+/* ── Chips ── */
+.chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 10px; border-radius: 100px; font-size: 11px; font-weight: 700;
+}
+.chip-honbu   { background: #e8f5e9; color: var(--sage3); border: 1.5px solid #b5d4b0; }
+.chip-jigyou  { background: var(--lavender); color: #6340b0; border: 1.5px solid #c8b5e8; }
+.chip-shokushu{ background: var(--sky); color: #1a5fa0; border: 1.5px solid #a0c8e8; }
+.chip-layer   { background: var(--peach); color: #8a4a10; border: 1.5px solid #e8c0a0; }
+.chip-media   { background: var(--yellow); color: #806000; border: 1.5px solid #d4c060; }
+
+/* Status */
+.status-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; border: 1.5px solid;
+}
+.s-active { background: #e8f5e9; color: #2a8040; border-color: #90c890; }
+.s-warn   { background: var(--yellow); color: #806000; border-color: #d4c060; }
+.s-danger { background: #ffe8e8; color: #b02020; border-color: #f0a0a0; }
+.s-done   { background: var(--mint); color: #1a7060; border-color: #80c8b8; }
+.s-hold   { background: var(--cream2); color: var(--text2); border-color: var(--border); }
+
+/* Priority */
+.pri { display: inline-flex; align-items: center; gap: 3px; font-weight: 900; font-size: 13px; }
+.pri-S{ color:var(--pri-s); }
+.pri-A{ color:var(--pri-a); }
+.pri-B{ color:var(--pri-b); }
+.pri-C{ color:var(--pri-c); }
+
+/* People */
+.people-bar { display: flex; align-items: center; gap: 5px; }
+.people-icons { display: flex; gap: 1px; font-size: 15px; }
+.p-filled { opacity: 1; }
+.p-empty { opacity: .2; }
+.people-nums { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--text2); }
+
+/* Days */
+.days-pill {
+  font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 700;
+  padding: 2px 9px; border-radius: 100px; border: 1.5px solid;
+}
+.days-ok     { background: #e8f5e9; color: #2a8040; border-color: #90c890; }
+.days-warn   { background: var(--yellow); color: #806000; border-color: #d4c060; }
+.days-danger { background: #ffe8e8; color: #b02020; border-color: #f0a0a0; }
+
+.budget-cell { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--text2); }
+
+/* ── Calendar ── */
+.cal-wrap { background: #fff; border: 2px solid var(--border); border-radius: var(--r); padding: 20px; box-shadow: var(--shadow); }
+.cal-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.cal-nav-btn {
+  background: var(--cream2); border: 2px solid var(--border); border-radius: 100px;
+  width: 32px; height: 32px; cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; transition: all .15s;
+}
+.cal-nav-btn:hover { background: var(--mint); border-color: var(--sage); }
+.cal-title { font-size: 17px; font-weight: 900; color: var(--sage3); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-weekday { text-align: center; font-size: 11px; font-weight: 700; color: var(--text2); padding-bottom: 6px; }
+.cal-day {
+  min-height: 72px; background: var(--cream); border-radius: var(--r-xs);
+  padding: 5px; border: 1.5px solid transparent; position: relative;
+}
+.cal-day.today { border-color: var(--sage2); background: #e8f5e9; }
+.cal-day.other-month .cal-day-num { color: #ccc; }
+.cal-day-num { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+.cal-event {
+  font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; font-weight: 700;
+}
+.cal-ev-S { background: #ffe0e0; color: #b02020; }
+.cal-ev-A { background: var(--yellow); color: #806000; }
+.cal-ev-B { background: var(--sky); color: #1a5fa0; }
+.cal-ev-C { background: var(--cream2); color: var(--text2); }
+
+/* ── Analytics ── */
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px; }
+.chart-card {
+  background: #fff; border: 2px solid var(--border); border-radius: var(--r);
+  padding: 16px; box-shadow: var(--shadow);
+}
+.chart-title {
+  font-size: 12px; font-weight: 900; color: var(--text2);
+  letter-spacing: .04em; margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+}
+.chart-wrap { position: relative; height: 210px; }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(74,55,40,.45); backdrop-filter: blur(4px);
+  z-index: 200; display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--cream); border: 2px solid var(--border); border-radius: var(--r);
+  width: 580px; max-width: 95vw; max-height: 92vh; overflow-y: auto;
+  padding: 24px; box-shadow: var(--shadow-lg);
+}
+.modal-animal { font-size: 36px; text-align: center; margin-bottom: 4px; }
+.modal-title { font-size: 17px; font-weight: 900; color: var(--sage3); text-align: center; margin-bottom: 20px; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group.full { grid-column: 1/-1; }
+.form-label { font-size: 11px; color: var(--text2); font-weight: 700; }
+.form-input, .form-select, .form-textarea {
+  background: #fff; border: 2px solid var(--border); border-radius: var(--r-xs);
+  color: var(--text); font-family: inherit; font-size: 13px; padding: 8px 10px;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--sage2); }
+.form-textarea { resize: vertical; min-height: 60px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+/* ── Master Settings Modal ── */
+.modal-overlay#master-modal {
+  position: fixed; inset: 0; background: rgba(74,55,40,.45); backdrop-filter: blur(4px);
+  z-index: 200; display: none; align-items: center; justify-content: center;
+}
+.modal-overlay#master-modal.open { display: flex; }
+
+.master-modal {
+  width: 620px;
+}
+.master-section { margin-bottom: 20px; }
+.master-sec-title { font-size: 13px; font-weight: 900; color: var(--sage3); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.master-items { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.master-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #fff; border: 2px solid var(--border); border-radius: 100px;
+  padding: 3px 10px; font-size: 12px; font-weight: 700;
+}
+.master-tag-del {
+  cursor: pointer; color: #f07070; font-size: 14px; line-height: 1;
+  background: none; border: none; font-family: inherit; padding: 0;
+}
+.master-tag-del:hover { color: var(--pri-s); }
+.master-add-row { display: flex; gap: 6px; }
+.master-add-input {
+  background: #fff; border: 2px solid var(--border); border-radius: 100px;
+  color: var(--text); font-family: inherit; font-size: 12px; padding: 5px 12px; flex: 1;
+}
+.master-add-input:focus { outline: none; border-color: var(--sage2); }
+.master-add-btn {
+  background: var(--sage2); border: 2px solid var(--sage3); color: #fff;
+  border-radius: 100px; padding: 5px 14px; font-size: 12px; font-weight: 700;
+  font-family: inherit; cursor: pointer;
+}
+.master-add-btn:hover { background: var(--sage3); }
+
+/* ── Divider ── */
+.section-label {
+  font-size: 11px; font-weight: 900; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.empty-row td { text-align:center; padding: 30px; color: var(--text2); font-size: 13px; }
+
+.acc-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; background: var(--sage2); color: #fff;
+  border-radius: 100px; font-size: 11px; font-weight: 900; padding: 0 6px;
+}
+.acc-kpi-mini { display: flex; gap: 10px; font-size: 11px; color: var(--text2); }
+.acc-kpi-mini span { display: flex; align-items: center; gap: 3px; }
+
+.note-cell { max-width: 130px; overflow: hidden; text-overflow: ellipsis; color: var(--text2); }
+
+.progress-mini { display: flex; align-items: center; gap: 6px; }
+.prog-bar { flex: 1; height: 5px; background: var(--cream2); border-radius: 3px; min-width: 40px; }
+.prog-fill { height: 100%; border-radius: 3px; background: var(--sage2); }
+</style>
+</head>
+<body>
+
+<div class="forest-bg">
+  <div class="f-animal">🦊</div>
+  <div class="f-animal">🐿️</div>
+  <div class="f-animal">🦔</div>
+  <div class="f-animal">🐰</div>
+  <div class="f-animal">🦉</div>
+  <div class="f-animal">🐦</div>
+  <div class="f-animal">🍄</div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-animals">🌿🦊🌱</div>
+    もりのさいようけいかく
+  </div>
+  <div class="header-meta">
+    <button class="btn btn-ghost" style="font-size:11px" onclick="openMasterModal()">⚙️ 項目マスター編集</button>
+    <div class="live-badge"><div class="live-dot"></div>🐿️ 共同編集中</div>
+    <span id="last-updated" style="font-size:11px;color:var(--text2)"></span>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('list')">🌿 採用一覧</div>
+  <div class="tab" onclick="switchTab('calendar')">🗓️ カレンダー</div>
+  <div class="tab" onclick="switchTab('analytics')">📊 分析</div>
+</div>
+
+<main>
+
+<div id="view-list" class="view active">
+  <div class="kpi-row" id="kpi-row"></div>
+
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="openAddModal()">🐣 新規採用計画を追加</button>
+    <input class="search-box" type="text" placeholder="🔍 キーワード検索…" oninput="renderAccordion()">
+    <select class="filter-select" id="f-status" onchange="renderAccordion()">
+      <option value="">ステータス すべて</option>
+      <option>採用中</option><option>達成</option><option>期限超過</option><option>保留</option><option>計画中</option>
+    </select>
+    <select class="filter-select" id="f-priority" onchange="renderAccordion()">
+      <option value="">優先度 すべて</option>
+      <option>S</option><option>A</option><option>B</option><option>C</option>
+    </select>
+    <button class="btn btn-ghost" onclick="exportCSV()">⬇️ CSV</button>
+  </div>
+
+  <div class="accordion-wrap" id="accordion-wrap"></div>
+</div>
+
+<div id="view-calendar" class="view">
+  <div class="cal-wrap">
+    <div class="cal-top">
+      <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
+      <div class="cal-title" id="cal-title"></div>
+      <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div style="display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;font-size:11px;font-weight:700;color:var(--text2)">
+      <span>🔴 S（最優先）</span><span>🟡 A（高）</span><span>🔵 B（中）</span><span>⚪ C（低）</span>
+    </div>
+  </div>
+</div>
+
+<div id="view-analytics" class="view">
+  <div class="kpi-row" id="kpi-row2"></div>
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">🌲 本部別 採用状況</div><div class="chart-wrap"><canvas id="chart-honbu"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">🦊 職種別 必要人数</div><div class="chart-wrap"><canvas id="chart-shokushu"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">⭐ 優先度別 分布</div><div class="chart-wrap"><canvas id="chart-priority"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">📱 採用媒体別 件数</div><div class="chart-wrap"><canvas id="chart-media"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">🌸 ステータス別 件数</div><div class="chart-wrap"><canvas id="chart-status"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">🎋 レイヤー別 必要人数</div><div class="chart-wrap"><canvas id="chart-layer"></canvas></div></div>
+    <div class="chart-card" style="grid-column:1/-1"><div class="chart-title">💰 本部別 暫定予算（万円）</div><div class="chart-wrap" style="height:180px"><canvas id="chart-budget"></canvas></div></div>
+  </div>
+</div>
+
+</main>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-animal" id="modal-animal">🐣</div>
+    <div class="modal-title" id="modal-title">採用計画を追加</div>
+    <div class="modal-grid">
+      <div class="form-group"><label class="form-label">🌲 本部</label><select class="form-select" id="m-honbu" onchange="cascadeJigyou()"></select></div>
+      <div class="form-group"><label class="form-label">🌿 事業</label><select class="form-select" id="m-jigyou" onchange="cascadeShokushu()"></select></div>
+      <div class="form-group"><label class="form-label">🦊 職種</label><select class="form-select" id="m-shokushu"></select></div>
+      <div class="form-group"><label class="form-label">🎋 レイヤー</label><select class="form-select" id="m-layer"></select></div>
+      <div class="form-group"><label class="form-label">📱 採用媒体</label><select class="form-select" id="m-media"></select></div>
+      <div class="form-group"><label class="form-label">📅 採用期限</label><input type="date" class="form-input" id="m-deadline"></div>
+      <div class="form-group"><label class="form-label">👤 必要人数</label><input type="number" class="form-input" id="m-needed" min="1" value="1" oninput="updateBudgetPreview()"></div>
+      <div class="form-group"><label class="form-label">✅ 現在採用人数</label><input type="number" class="form-input" id="m-current" min="0" value="0"></div>
+      <div class="form-group"><label class="form-label">🌸 採用ステータス</label><select class="form-select" id="m-status"></select></div>
+      <div class="form-group"><label class="form-label">⭐ 優先度</label><select class="form-select" id="m-priority"><option>S</option><option>A</option><option>B</option><option>C</option></select></div>
+      <div class="form-group"><label class="form-label">💰 想定CPA（万円）</label><input type="number" class="form-input" id="m-cpa" min="0" value="50" oninput="updateBudgetPreview()"></div>
+      <div class="form-group"><label class="form-label">📊 暫定予算（自動計算）</label><input type="text" class="form-input" id="m-budget" readonly style="background:var(--cream2)"></div>
+      <div class="form-group full"><label class="form-label">📝 備考</label><textarea class="form-textarea" id="m-note" placeholder="備考・アクション等…"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="btn-delete" onclick="deleteRecord()" style="display:none">🗑️ 削除</button>
+      <button class="btn btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveRecord()">🐾 保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="master-modal">
+  <div class="modal master-modal">
+    <div class="modal-animal">⚙️</div>
+    <div class="modal-title">項目マスターを編集</div>
+    <div id="master-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeMasterModal()">とじる</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // 1. Firebaseモジュールライブラリの読み込み
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // ⚠️ [重要] ご自身のFirebaseプロジェクト設定をここに反映させてください
+  const firebaseConfig = {
+   apiKey: "AIzaSyDID9VLnYZwYaJ2wrQBYIj29gcMmyG6yuc",
+  authDomain: "task-abef2.firebaseapp.com",
+  databaseURL: "https://task-abef2-default-rtdb.firebaseio.com",
+  projectId: "task-abef2",
+  storageBucket: "task-abef2.firebasestorage.app",
+  messagingSenderId: "364908646523",
+  appId: "1:364908646523:web:809256785c2387e65952de"
+};
+
+  // Firebase初期起動
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // アプリケーション内グローバルスコープ変数定義
+  const today = new Date(); today.setHours(0,0,0,0);
+  window.records = [];
+  window.editingId = null;
+  window.calYear = today.getFullYear();
+  window.calMonth = today.getMonth();
+  window.charts = {};
+
+  // マスターの基本フォールバック設定
+  window.master = {
+    honbuMap: {
+      '経営企画本部': { '全社共通': ['経営企画','IR・広報','法務','情報システム'], '新規事業室': ['新規事業企画','リサーチャー'] },
+      '技術本部': { 'DX推進': ['フロントエンドエンジニア','バックエンドエンジニア','データエンジニア','SRE'], 'HR Tech': ['エンジニア','PM','データサイエンティスト'], 'Fintech': ['エンジニア','セキュリティエンジニア'] },
+      'マーケティング本部': { 'ブランド事業': ['ブランドマネージャー','コピーライター','デザイナー'], 'デジタルマーケ': ['SEO担当','広告運用','アナリスト'] },
+      'セールス本部': { '既存事業': ['フィールドセールス','インサイドセールス','CS'], '新規開拓': ['フィールドセールス','パートナーセールス'] },
+      'コーポレート本部': { '全社共通': ['人事','経理・財務','法務','総務'] }
+    },
+    layers: ['新卒','第二新卒','中途（一般）','シニア','マネージャー','ディレクター','役員'],
+    media: ['Wantedly','LinkedIn','Indeed','Green','doda','リクナビNEXT','マイナビ転職','エージェント','リファラル','自社HP'],
+    statuses: ['採用中','計画中','達成','期限超過','保留']
+  };
+
+  function getSample() {
+    const d = off => { const dt=new Date(); dt.setDate(dt.getDate()+off); return dt.toISOString().split('T')[0]; };
+    return [
+      {id:1,honbu:'技術本部',jigyou:'DX推進',shokushu:'フロントエンドエンジニア',layer:'中途（一般）',media:'LinkedIn',deadline:d(14),needed:3,current:1,status:'採用中',priority:'S',cpa:80,note:'React経験者優先'},
+      {id:2,honbu:'マーケティング本部',jigyou:'デジタルマーケ',shokushu:'アナリスト',layer:'シニア',media:'エージェント',deadline:d(30),needed:2,current:0,status:'採用中',priority:'A',cpa:120,note:''},
+      {id:3,honbu:'セールス本部',jigyou:'既存事業',shokushu:'フィールドセールス',layer:'中途（一般）',media:'doda',deadline:d(45),needed:5,current:3,status:'採用中',priority:'A',cpa:50,note:'関西エリア'},
+      {id:4,honbu:'コーポレート本部',jigyou:'全社共通',shokushu:'人事',layer:'マネージャー',media:'Wantedly',deadline:d(60),needed:1,current:0,status:'計画中',priority:'B',cpa:100,note:''},
+      {id:5,honbu:'技術本部',jigyou:'HR Tech',shokushu:'PM',layer:'ディレクター',media:'LinkedIn',deadline:d(7),needed:1,current:0,status:'採用中',priority:'S',cpa:150,note:'即戦力必須'},
+      {id:6,honbu:'技術本部',jigyou:'Fintech',shokushu:'エンジニア',layer:'中途（一般）',media:'Green',deadline:d(90),needed:2,current:2,status:'達成',priority:'C',cpa:60,note:''},
+      {id:7,honbu:'経営企画本部',jigyou:'全社共通',shokushu:'法務',layer:'シニア',media:'エージェント',deadline:d(-5),needed:1,current:0,status:'期限超過',priority:'S',cpa:90,note:'早急対応要'},
+      {id:8,honbu:'セールス本部',jigyou:'新規開拓',shokushu:'フィールドセールス',layer:'第二新卒',media:'マイナビ転職',deadline:d(20),needed:4,current:1,status:'採用中',priority:'B',cpa:30,note:'テレワーク可'},
+    ];
+  }
+
+  // ── FIREBASE FIRESTORE LISTENERS (リアルタイムデータ監視) ──
+  
+  // 計画データの購読
+  onSnapshot(doc(db, "mori_recruit_v3", "current_data"), (docSnap) => {
+    if (docSnap.exists()) {
+      window.records = docSnap.data().records || [];
+    } else {
+      window.records = getSample();
+      window.saveAll();
+    }
+    syncCurrentTabDisplay();
+  });
+
+  // 項目マスターデータの購読
+  onSnapshot(doc(db, "mori_recruit_v3", "master_data"), (docSnap) => {
+    if (docSnap.exists()) {
+      window.master = docSnap.data().master || window.master;
+    } else {
+      window.saveAll();
+    }
+  });
+
+  // Firestoreデータベース側への一括書き込み更新処理
+  window.saveAll = async function() {
+    try {
+      await setDoc(doc(db, "mori_recruit_v3", "current_data"), { records: window.records });
+      await setDoc(doc(db, "mori_recruit_v3", "master_data"), { master: window.master });
+      document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('ja-JP');
+    } catch (e) {
+      console.error("Firestore同期書き込みエラー:", e);
+    }
+  }
+
+  function syncCurrentTabDisplay() {
+    window.refresh();
+    if(document.getElementById('view-calendar').classList.contains('active')) window.renderCalendar();
+    if(document.getElementById('view-analytics').classList.contains('active')) window.renderCharts();
+    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('ja-JP');
+  }
+
+  // ════════════════════════════════════════
+  // CORE FUNCTIONS (windowオブジェクト化)
+  // ════════════════════════════════════════
+  window.daysUntil = function(dl){ const d=new Date(dl); d.setHours(0,0,0,0); return Math.ceil((d-today)/86400000); }
+  window.fmt = function(n){ return Number(n||0).toLocaleString('ja-JP'); }
+  window.fmtB = function(cpa,n){ return window.fmt((cpa||0)*(n||0))+'万円'; }
+  window.nextId = function(){ return window.records.length?Math.max(...window.records.map(r=>r.id))+1:1; }
+  window.daysClass = function(d){ return d<0?'days-danger':d<=14?'days-warn':'days-ok'; }
+  window.statusClass = function(s){ return {採用中:'s-active',計画中:'s-hold',達成:'s-done',期限超過:'s-danger',保留:'s-warn'}[s]||'s-hold'; }
+  window.statusIcon = function(s){ return {採用中:'🐾',計画中:'🌱',達成:'🎉',期限超過:'🚨',保留:'😴'}[s]||''; }
+  window.priClass = function(p){ return 'pri-'+p; }
+  window.animalForPri = function(p){ return {S:'🦁',A:'🦊',B:'🐿️',C:'🐰'}[p]||'🐾'; }
+
+  window.peopleCells = function(needed, current) {
+    needed=parseInt(needed)||0; current=parseInt(current)||0;
+    const remain=Math.max(needed-current,0);
+    let icons='';
+    for(let i=0;i<Math.min(needed,8);i++) icons+=`<span class="${i<current?'p-filled':'p-empty'}">👤</span>`;
+    if(needed>8) icons+=`<span style="font-size:10px;color:var(--text2)">+${needed-8}</span>`;
+    return `<div class="people-bar"><div class="people-icons">${icons}</div><div class="people-nums">${current}/${needed}（残${remain}）</div></div>`;
+  }
+
+  window.getFiltered = function() {
+    const q=(document.querySelector('.search-box')?.value||'').toLowerCase();
+    const fS=document.getElementById('f-status')?.value||'';
+    const fP=document.getElementById('f-priority')?.value||'';
+    return window.records.filter(r=>{
+      if(fS && r.status!==fS) return false;
+      if(fP && r.priority!==fP) return false;
+      if(q && !JSON.stringify(r).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  window.renderKPIs = function(targetId) {
+    const rs=window.records;
+    const totalN=rs.reduce((a,r)=>a+(r.needed||0),0);
+    const totalC=rs.reduce((a,r)=>a+(r.current||0),0);
+    const overdue=rs.filter(r=>window.daysUntil(r.deadline)<0&&r.status!=='達成').length;
+    const urgent=rs.filter(r=>{const d=window.daysUntil(r.deadline);return d>=0&&d<=14&&r.status!=='達成';}).length;
+    const budget=rs.reduce((a,r)=>a+(r.cpa||0)*(r.needed||0),0);
+    const done=rs.filter(r=>r.status==='達成').length;
+    document.getElementById(targetId).innerHTML=`
+      <div class="kpi-card kpi-sage" data-animal="🌲"><div class="kpi-label">総計画数</div><div class="kpi-value">${rs.length}</div><div class="kpi-sub">件のぼうけん</div></div>
+      <div class="kpi-card kpi-peach" data-animal="🦊"><div class="kpi-label">必要採用総数</div><div class="kpi-value">${totalN}</div><div class="kpi-sub">人のなかま</div></div>
+      <div class="kpi-card kpi-sage" data-animal="🐾"><div class="kpi-label">採用済み</div><div class="kpi-value">${totalC}</div><div class="kpi-sub">${totalN?Math.round(totalC/totalN*100):0}% たっせい</div></div>
+      <div class="kpi-card kpi-blush" data-animal="🚨"><div class="kpi-label">期限超過</div><div class="kpi-value">${overdue}</div><div class="kpi-sub">件 はやく！</div></div>
+      <div class="kpi-card kpi-yellow" data-animal="⏰"><div class="kpi-label">14日以内</div><div class="kpi-value">${urgent}</div><div class="kpi-sub">件 がんばれ</div></div>
+      <div class="kpi-card kpi-sky" data-animal="🎉"><div class="kpi-label">達成済み</div><div class="kpi-value">${done}</div><div class="kpi-sub">件 やったね！</div></div>
+      <div class="kpi-card kpi-lav" data-animal="💰"><div class="kpi-label">暫定総予算</div><div class="kpi-value">${window.fmt(budget)}</div><div class="kpi-sub">万円</div></div>
+    `;
+  }
+
+  const HONBU_ANIMALS = { '経営企画本部':'🦉','技術本部':'🦫','マーケティング本部':'🦊','セールス本部':'🐺','コーポレート本部':'🐻' };
+  const JIGYOU_ANIMALS = ['🌿','🍀','🌸','🍃','🌾','🌱'];
+
+  window.renderAccordion = function() {
+    const filtered = window.getFiltered();
+    const wrap = document.getElementById('accordion-wrap');
+
+    const honbuList = [...new Set(window.records.map(r=>r.honbu))];
+    if(!honbuList.length){ wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">🌱 まだデータがありません</div>'; return; }
+
+    wrap.innerHTML = honbuList.map(honbu => {
+      const honbuRecs = filtered.filter(r=>r.honbu===honbu);
+      const jigyouList = [...new Set(window.records.filter(r=>r.honbu===honbu).map(r=>r.jigyou))];
+      const totalN = honbuRecs.reduce((a,r)=>a+(r.needed||0),0);
+      const totalC = honbuRecs.reduce((a,r)=>a+(r.current||0),0);
+      const animal = HONBU_ANIMALS[honbu]||'🌲';
+
+      const jigyouBlocks = jigyouList.map((jigyou,ji) => {
+        const jiRecs = honbuRecs.filter(r=>r.jigyou===jigyou);
+        const jiN = jiRecs.reduce((a,r)=>a+(r.needed||0),0);
+        const jiC = jiRecs.reduce((a,r)=>a+(r.current||0),0);
+        const jAnimal = JIGYOU_ANIMALS[ji%JIGYOU_ANIMALS.length];
+
+        const tableRows = jiRecs.length ? jiRecs.map(r=>{
+          const days=window.daysUntil(r.deadline);
+          return `<tr>
+            <td><span class="chip chip-shokushu">🔹 ${r.shokushu}</span></td>
+            <td><span class="chip chip-layer">${r.layer}</span></td>
+            <td><span class="chip chip-media">${r.media}</span></td>
+            <td style="font-family:'JetBrains Mono';font-size:11px">${r.deadline}</td>
+            <td><span class="days-pill ${window.daysClass(days)}">${days>=0?days+'日':'超過'+(days*-1)+'日'}</span></td>
+            <td>${window.peopleCells(r.needed,r.current)}</td>
+            <td><span class="status-chip ${window.statusClass(r.status)}">${window.statusIcon(r.status)} ${r.status}</span></td>
+            <td><span class="pri ${window.priClass(r.priority)}">${window.animalForPri(r.priority)}【${r.priority}】</span></td>
+            <td class="budget-cell">${window.fmt(r.cpa)}万</td>
+            <td class="budget-cell">${window.fmtB(r.cpa,r.needed)}</td>
+            <td class="note-cell" title="${r.note||''}">${r.note||'—'}</td>
+            <td><button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;border-radius:100px" onclick="openEditModal(${r.id})">✏️</button></td>
+          </tr>`;
+        }).join('') : `<tr class="empty-row"><td colspan="12">🌱 この事業の採用計画はありません</td></tr>`;
+
+        return `
+          <div class="sub-acc-item">
+            <div class="sub-acc-header" onclick="toggleSubAcc(this)">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span>${jAnimal}</span>
+                <span>${jigyou}</span>
+                ${jiRecs.length?`<span class="acc-count">${jiRecs.length}</span>`:''}
+                <span class="acc-kpi-mini"><span>必要 ${jiN}人</span><span>/ 採用 ${jiC}人</span></span>
+              </div>
+              <span class="acc-arrow">▶</span>
+            </div>
+            <div class="sub-acc-body">
+              <div class="acc-table-wrap">
+                <table class="acc-table">
+                  <thead><tr>
+                    <th>職種</th><th>レイヤー</th><th>採用媒体</th><th>採用期限</th><th>残日数</th>
+                    <th>必要/現在/残</th><th>ステータス</th><th>優先度</th>
+                    <th>CPA</th><th>暫定予算</th><th>備考</th><th></th>
+                  </tr></thead>
+                  <tbody>${tableRows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAcc(this)">
+            <div class="acc-left">
+              <span class="acc-icon">${animal}</span>
+              <span>${honbu}</span>
+              ${honbuRecs.length?`<span class="acc-count">${honbuRecs.length}</span>`:''}
+              <span class="acc-kpi-mini" style="font-size:11px;color:var(--text2)">
+                <span>必要 ${totalN}人</span><span>/ 採用 ${totalC}人</span>
+              </span>
+            </div>
+            <span class="acc-arrow">▶</span>
+          </div>
+          <div class="accordion-body">${jigyouBlocks}</div>
+        </div>`;
+    }).join('');
+  }
+
+  window.toggleAcc = function(header) { header.classList.toggle('open'); header.nextElementSibling.classList.toggle('open'); }
+  window.toggleSubAcc = function(header) { header.classList.toggle('open'); header.nextElementSibling.classList.toggle('open'); }
+
+  // ── MODAL CONTROL FUNCTIONS ──
+  window.populateModalSelects = function() {
+    const honbus = Object.keys(window.master.honbuMap);
+    const fH = document.getElementById('m-honbu');
+    const curH = fH.value;
+    fH.innerHTML = honbus.map(h=>`<option>${h}</option>`).join('');
+    if(curH && honbus.includes(curH)) fH.value=curH;
+    window.cascadeJigyou();
+    window.populateSelect('m-layer',  window.master.layers);
+    window.populateSelect('m-media',  window.master.media);
+    window.populateSelect('m-status', window.master.statuses);
+  }
+  window.populateSelect = function(id, arr) {
+    const el=document.getElementById(id), cur=el.value;
+    el.innerHTML=arr.map(v=>`<option>${v}</option>`).join('');
+    if(arr.includes(cur)) el.value=cur;
+  }
+  window.cascadeJigyou = function() {
+    const h=document.getElementById('m-honbu').value;
+    const jigyous=Object.keys(window.master.honbuMap[h]||{});
+    window.populateSelect('m-jigyou', jigyous);
+    window.cascadeShokushu();
+  }
+  window.cascadeShokushu = function() {
+    const h=document.getElementById('m-honbu').value;
+    const j=document.getElementById('m-jigyou').value;
+    const sks=(window.master.honbuMap[h]||{})[j]||[];
+    window.populateSelect('m-shokushu', sks);
+  }
+  window.updateBudgetPreview = function() {
+    const cpa=parseFloat(document.getElementById('m-cpa').value)||0;
+    const n=parseInt(document.getElementById('m-needed').value)||0;
+    document.getElementById('m-budget').value=window.fmtB(cpa,n);
+  }
+
+  window.openAddModal = function() {
+    window.editingId=null;
+    document.getElementById('modal-animal').textContent='🐣';
+    document.getElementById('modal-title').textContent='新しいなかまをさがそう';
+    document.getElementById('btn-delete').style.display='none';
+    document.getElementById('m-deadline').value=new Date().toISOString().split('T')[0];
+    document.getElementById('m-needed').value=1;
+    document.getElementById('m-current').value=0;
+    document.getElementById('m-cpa').value=50;
+    document.getElementById('m-note').value='';
+    window.populateModalSelects();
+    window.updateBudgetPreview();
+    document.getElementById('modal').classList.add('open');
+  }
+  window.openEditModal = function(id) {
+    window.editingId=id;
+    const r=window.records.find(x=>x.id===id); if(!r) return;
+    document.getElementById('modal-animal').textContent=window.animalForPri(r.priority);
+    document.getElementById('modal-title').textContent='計画を編集する';
+    document.getElementById('btn-delete').style.display='inline-flex';
+    window.populateModalSelects();
+    document.getElementById('m-honbu').value=r.honbu; window.cascadeJigyou();
+    document.getElementById('m-jigyou').value=r.jigyou; window.cascadeShokushu();
+    document.getElementById('m-shokushu').value=r.shokushu;
+    document.getElementById('m-layer').value=r.layer;
+    document.getElementById('m-media').value=r.media;
+    document.getElementById('m-deadline').value=r.deadline;
+    document.getElementById('m-needed').value=r.needed;
+    document.getElementById('m-current').value=r.current;
+    document.getElementById('m-status').value=r.status;
+    document.getElementById('m-priority').value=r.priority;
+    document.getElementById('m-cpa').value=r.cpa;
+    document.getElementById('m-note').value=r.note||'';
+    window.updateBudgetPreview();
+    document.getElementById('modal').classList.add('open');
+  }
+  window.closeModal = function(){ document.getElementById('modal').classList.remove('open'); }
+
+  window.saveRecord = function() {
+    const r={
+      honbu:    document.getElementById('m-honbu').value,
+      jigyou:   document.getElementById('m-jigyou').value,
+      shokushu: document.getElementById('m-shokushu').value,
+      layer:    document.getElementById('m-layer').value,
+      media:    document.getElementById('m-media').value,
+      deadline: document.getElementById('m-deadline').value,
+      needed:   parseInt(document.getElementById('m-needed').value)||1,
+      current:  parseInt(document.getElementById('m-current').value)||0,
+      status:   document.getElementById('m-status').value,
+      priority: document.getElementById('m-priority').value,
+      cpa:      parseFloat(document.getElementById('m-cpa').value)||0,
+      note:     document.getElementById('m-note').value,
+    };
+    if(window.editingId){ const i=window.records.findIndex(x=>x.id===window.editingId); if(i>=0) window.records[i]={...window.records[i],...r}; }
+    else { r.id=window.nextId(); window.records.push(r); }
+    window.saveAll(); window.closeModal();
+  }
+  window.deleteRecord = function() {
+    if(!window.editingId||!confirm('この計画を削除しますか？🗑️')) return;
+    window.records=window.records.filter(r=>r.id!==window.editingId);
+    window.saveAll(); window.closeModal();
+  }
+
+  // ── MASTER SETTINGS LOGIC ──
+  window.openMasterModal = function() { window.renderMasterBody(); document.getElementById('master-modal').classList.add('open'); }
+  window.closeMasterModal = function(){ document.getElementById('master-modal').classList.remove('open'); }
+
+  window.renderMasterBody = function() {
+    let html = '';
+    const honbus = Object.keys(window.master.honbuMap);
+    html += `<div class="master-section">
+      <div class="master-sec-title">🌲 本部一覧</div>
+      <div class="master-items">
+        ${honbus.map(h=>`<span class="master-tag">${h}<button class="master-tag-del" onclick="deleteMasterHonbu('${h}')">×</button></span>`).join('')}
+      </div>
+      <div class="master-add-row" style="margin-top:8px">
+        <input class="master-add-input" id="ms-honbu-input" placeholder="本部名を追加…">
+        <button class="master-add-btn" onclick="addMasterHonbu()">追加</button>
+      </div>
+    </div>`;
+
+    html += `<div class="master-section"><div class="master-sec-title">🌿 事業（本部を選んで編集）</div>`;
+    honbus.forEach(h => {
+      const jigyous = Object.keys(window.master.honbuMap[h]||{});
+      html += `<div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px">${HONBU_ANIMALS[h]||'🌲'} ${h}</div>
+        <div class="master-items">
+          ${jigyous.map(j=>`<span class="master-tag">${j}<button class="master-tag-del" onclick="deleteMasterJigyou('${h}','${j}')">×</button></span>`).join('')}
+        </div>
+        <div class="master-add-row" style="margin-top:5px">
+          <input class="master-add-input" id="ms-jigyou-input-${CSS.escape(h)}" placeholder="事業名を追加…">
+          <button class="master-add-btn" onclick="addMasterJigyou('${h}')">追加</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+
+    html += `<div class="master-section"><div class="master-sec-title">🦊 職種（本部›事業を選んで編集）</div>`;
+    honbus.forEach(h => {
+      const jigyous=Object.keys(window.master.honbuMap[h]||{});
+      jigyous.forEach(j => {
+        const sks=window.master.honbuMap[h][j]||[];
+        const key=`${h}__${j}`;
+        html += `<div style="margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px">${HONBU_ANIMALS[h]||'🌲'} ${h} › 🌿 ${j}</div>
+          <div class="master-items">
+            ${sks.map((s,i)=>`<span class="master-tag">${s}<button class="master-tag-del" onclick="deleteMasterShokushu('${h}','${j}',${i})">×</button></span>`).join('')}
+          </div>
+          <div class="master-add-row" style="margin-top:5px">
+            <input class="master-add-input" id="ms-sk-input-${CSS.escape(key)}" placeholder="職種名を追加…">
+            <button class="master-add-btn" onclick="addMasterShokushu('${h}','${j}')">追加</button>
+          </div>
+        </div>`;
+      });
+    });
+    html += `</div>`;
+
+    html += masterListSection('🎋 レイヤー', window.master.layers, 'layers', 'ms-layer-input');
+    html += masterListSection('📱 採用媒体', window.master.media, 'media', 'ms-media-input');
+    html += masterListSection('🌸 ステータス', window.master.statuses, 'statuses', 'ms-status-input');
+    document.getElementById('master-body').innerHTML = html;
+  }
+
+  function masterListSection(title, arr, key, inputId) {
+    return `<div class="master-section">
+      <div class="master-sec-title">${title}</div>
+      <div class="master-items">
+        ${arr.map((v,i)=>`<span class="master-tag">${v}<button class="master-tag-del" onclick="deleteMasterItem('${key}',${i})">×</button></span>`).join('')}
+      </div>
+      <div class="master-add-row" style="margin-top:8px">
+        <input class="master-add-input" id="${inputId}" placeholder="追加…">
+        <button class="master-add-btn" onclick="addMasterItem('${key}','${inputId}')">追加</button>
+      </div>
+    </div>`;
+  }
+
+  window.addMasterHonbu = function() {
+    const v=document.getElementById('ms-honbu-input').value.trim(); if(!v) return;
+    if(!window.master.honbuMap[v]) window.master.honbuMap[v]={};
+    window.saveAll(); window.renderMasterBody();
+  }
+  window.deleteMasterHonbu = function(h) {
+    if(!confirm(`本部「${h}」を削除しますか？`)) return;
+    delete window.master.honbuMap[h]; window.saveAll(); window.renderMasterBody();
+  }
+  window.addMasterJigyou = function(h) {
+    const id=`ms-jigyou-input-${CSS.escape(h)}`;
+    const v=document.getElementById(id)?.value.trim(); if(!v) return;
+    if(!window.master.honbuMap[h]) window.master.honbuMap[h]={};
+    if(!window.master.honbuMap[h][v]) window.master.honbuMap[h][v]=[];
+    window.saveAll(); window.renderMasterBody();
+  }
+  window.deleteMasterJigyou = function(h,j) {
+    if(!confirm(`事業「${j}」を削除しますか？`)) return;
+    delete window.master.honbuMap[h][j]; window.saveAll(); window.renderMasterBody();
+  }
+  window.addMasterShokushu = function(h,j) {
+    const key=`${h}__${j}`;
+    const v=document.getElementById(`ms-sk-input-${CSS.escape(key)}`)?.value.trim(); if(!v) return;
+    if(!window.master.honbuMap[h][j].includes(v)) window.master.honbuMap[h][j].push(v);
+    window.saveAll(); window.renderMasterBody();
+  }
+  window.deleteMasterShokushu = function(h,j,i) {
+    window.master.honbuMap[h][j].splice(i,1); window.saveAll(); window.renderMasterBody();
+  }
+  window.addMasterItem = function(key, inputId) {
+    const v=document.getElementById(inputId)?.value.trim(); if(!v) return;
+    if(!window.master[key].includes(v)) window.master[key].push(v);
+    window.saveAll(); window.renderMasterBody();
+  }
+  window.deleteMasterItem = function(key, i) {
+    window.master[key].splice(i,1); window.saveAll(); window.renderMasterBody();
+  }
+
+  // ── CALENDAR LOGIC ──
+  window.renderCalendar = function() {
+    document.getElementById('cal-title').textContent=`${window.calYear}年 ${window.calMonth+1}月 🍃`;
+    const weekdays=['日','月','火','水','木','金','土'];
+    let html=weekdays.map(w=>`<div class="cal-weekday">${w}</div>`).join('');
+    const first=new Date(window.calYear,window.calMonth,1), startDay=first.getDay();
+    const daysInMonth=new Date(window.calYear,window.calMonth+1,0).getDate();
+    const daysInPrev=new Date(window.calYear,window.calMonth,0).getDate();
+    const events={};
+    window.records.forEach(r=>{ if(!events[r.deadline]) events[r.deadline]=[]; events[r.deadline].push(r); });
+    const cells=Math.ceil((startDay+daysInMonth)/7)*7;
+    for(let i=0;i<cells;i++){
+      let dn,mo=window.calMonth,yr=window.calYear,other=false;
+      if(i<startDay){dn=daysInPrev-startDay+i+1;mo=window.calMonth-1;other=true;}
+      else if(i>=startDay+daysInMonth){dn=i-startDay-daysInMonth+1;mo=window.calMonth+1;other=true;}
+      else dn=i-startDay+1;
+      if(mo<0){mo=11;yr--;}else if(mo>11){mo=0;yr++;}
+      const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`;
+      const isToday=ds===today.toISOString().split('T')[0];
+      const dayEvs=events[ds]||[];
+      const evHtml=dayEvs.slice(0,2).map(e=>`<div class="cal-event cal-ev-${e.priority}" title="${e.honbu} ${e.shokushu}">${window.animalForPri(e.priority)} ${e.shokushu}</div>`).join('');
+      const more=dayEvs.length>2?`<div style="font-size:9px;color:var(--text2)">+${dayEvs.length-2}件</div>`:'';
+      html+=`<div class="cal-day${isToday?' today':''}${other?' other-month':''}"><div class="cal-day-num">${dn}</div>${evHtml}${more}</div>`;
+    }
+    document.getElementById('cal-grid').innerHTML=html;
+  }
+  window.calNav = function(d){ window.calMonth+=d; if(window.calMonth<0){window.calMonth=11;window.calYear--;}else if(window.calMonth>11){window.calMonth=0;window.calYear++;} window.renderCalendar(); }
+
+  // ── CHARTS LOGIC ──
+  const C=['#8aab7a','#f7b86f','#88c7e0','#f0a0a0','#c5b0e0','#80d4c8','#f7d870','#a8c8f0'];
+  function dc(id){if(window.charts[id]){window.charts[id].destroy();delete window.charts[id];}}
+  function baseOpts(legend=false){
+    return {
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:legend,labels:{color:'#7a6055',font:{size:11},boxWidth:12,padding:10}}},
+      scales:{
+        x:{grid:{color:'rgba(139,101,81,.08)'},ticks:{color:'#7a6055',font:{size:10}}},
+        y:{grid:{color:'rgba(139,101,81,.08)'},ticks:{color:'#7a6055',font:{size:10}}}
+      }
+    };
+  }
+  function donutOpts(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#7a6055',font:{size:11},boxWidth:12,padding:10}}}};}
+
+  window.renderCharts = function() {
+    window.renderKPIs('kpi-row2');
+    {const ls=[...new Set(window.records.map(r=>r.honbu))];const n=ls.map(h=>window.records.filter(r=>r.honbu===h).reduce((a,r)=>a+(r.needed||0),0));const c=ls.map(h=>window.records.filter(r=>r.honbu===h).reduce((a,r)=>a+(r.current||0),0));dc('honbu');window.charts['honbu']=new Chart(document.getElementById('chart-honbu'),{type:'bar',data:{labels:ls,datasets:[{label:'必要',data:n,backgroundColor:'rgba(138,171,122,.7)',borderRadius:6},{label:'採用済',data:c,backgroundColor:'rgba(128,212,200,.7)',borderRadius:6}]},options:{...baseOpts(true)}});}
+    {const ls=[...new Set(window.records.map(r=>r.shokushu))];const d=ls.map(s=>window.records.filter(r=>r.shokushu===s).reduce((a,r)=>a+(r.needed||0),0));dc('shokushu');window.charts['shokushu']=new Chart(document.getElementById('chart-shokushu'),{type:'bar',data:{labels:ls,datasets:[{label:'必要人数',data:d,backgroundColor:C,borderRadius:6}]},options:{...baseOpts(false),indexAxis:'y'}});}
+    {const ps=['S','A','B','C'];const d=ps.map(p=>window.records.filter(r=>r.priority===p).length);dc('priority');window.charts['priority']=new Chart(document.getElementById('chart-priority'),{type:'doughnut',data:{labels:ps.map(p=>window.animalForPri(p)+' '+p),datasets:[{data:d,backgroundColor:['#f0a0a0','#f7d870','#88c7e0','#d4d4d4'],borderWidth:0,hoverOffset:8}]},options:donutOpts()});}
+    {const ls=[...new Set(window.records.map(r=>r.media))];const d=ls.map(m=>window.records.filter(r=>r.media===m).length);dc('media');window.charts['media']=new Chart(document.getElementById('chart-media'),{type:'doughnut',data:{labels:ls,datasets:[{data:d,backgroundColor:C,borderWidth:0,hoverOffset:8}]},options:donutOpts()});}
+    {const ss=['採用中','計画中','達成','期限超過','保留'];const d=ss.map(s=>window.records.filter(r=>r.status===s).length);dc('status');window.charts['status']=new Chart(document.getElementById('chart-status'),{type:'pie',data:{labels:ss,datasets:[{data:d,backgroundColor:['#88c7e0','#d4d4d4','#8aab7a','#f0a0a0','#f7d870'],borderWidth:0}]},options:donutOpts()});}
+    {const ls=[...new Set(window.records.map(r=>r.layer))];const d=ls.map(l=>window.records.filter(r=>r.layer===l).reduce((a,r)=>a+(r.needed||0),0));dc('layer');window.charts['layer']=new Chart(document.getElementById('chart-layer'),{type:'bar',data:{labels:ls,datasets:[{label:'必要人数',data:d,backgroundColor:C.slice(2),borderRadius:6}]},options:baseOpts(false)});}
+    {const ls=[...new Set(window.records.map(r=>r.honbu))];const d=ls.map(h=>window.records.filter(r=>r.honbu===h).reduce((a,r)=>a+(r.cpa||0)*(r.needed||0),0));dc('budget');window.charts['budget']=new Chart(document.getElementById('chart-budget'),{type:'bar',data:{labels:ls,datasets:[{label:'暫定予算(万円)',data:d,backgroundColor:'rgba(197,176,224,.8)',borderRadius:6}]},options:baseOpts(false)});}
+  }
+
+  window.exportCSV = function() {
+    const headers=['本部','事業','職種','レイヤー','採用媒体','採用期限','残日数','必要人数','現在採用','残数','ステータス','優先度','CPA(万)','暫定予算(万)','備考'];
+    const rows=window.records.map(r=>[r.honbu,r.jigyou,r.shokushu,r.layer,r.media,r.deadline,window.daysUntil(r.deadline),r.needed,r.current,Math.max(r.needed-r.current,0),r.status,r.priority,r.cpa,(r.cpa||0)*(r.needed||0),r.note||''].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+    const csv='\uFEFF'+[headers.join(','),...rows].join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    a.download=`採用計画_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+  }
+
+  // ── TAB INTERACTION ──
+  window.switchTab = function(name) {
+    document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['list','calendar','analytics'][i]===name));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+name).classList.add('active');
+    if(name==='calendar') window.renderCalendar();
+    if(name==='analytics') window.renderCharts();
+  }
+
+  window.refresh = function() {
+    window.renderKPIs('kpi-row');
+    window.renderAccordion();
+  }
+
+  // Backdrops click handlers
+  document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal')) window.closeModal();});
+  document.getElementById('master-modal').addEventListener('click',e=>{if(e.target===document.getElementById('master-modal')) window.closeMasterModal();});
+</script>
+</body>
+</html>
